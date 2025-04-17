@@ -13,6 +13,7 @@ public class Game extends Canvas implements Runnable {
     public static int width = 300;
     public static int height = width / 16 * 9;
     public static int scale = 3;
+    public static String title = "Rain";
 
     private Thread thread;
     private JFrame frame;
@@ -22,6 +23,8 @@ public class Game extends Canvas implements Runnable {
 
     private BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
     private int[] pixels = ((DataBufferInt)image.getRaster().getDataBuffer()).getData();
+
+
 
     public Game() {
         Dimension size = new Dimension(width * scale, height * scale);
@@ -47,9 +50,33 @@ public class Game extends Canvas implements Runnable {
 
     @Override
     public void run() {
-        while(running) {
-            update();
+        long timer = System.currentTimeMillis();
+        long lastTime = System.nanoTime();
+        double nsBtwUpdate = 1_000_000_000.0 / 60.0;
+        int ups = 0;
+        int fps = 0;
+        double delta = 0;
+
+        while (running) {
+            long now = System.nanoTime();
+            delta += (now - lastTime) / nsBtwUpdate;
+            lastTime = now;
+
+            while(delta >= 1) {
+                update();
+                ups++;
+                delta--;
+            }
+
+            if(System.currentTimeMillis() - timer >= 1000) {
+                timer += 1000;
+                frame.setTitle(title + " | ups: " + ups + ", " + "fps: " + fps);
+                ups = 0;
+                fps = 0;
+            }
+
             render();
+            fps++;
         }
     }
 
@@ -79,7 +106,7 @@ public class Game extends Canvas implements Runnable {
 
     public static void main(String[] args) {
         Game game = new Game();
-        game.frame.setTitle("ChernoGame");
+        game.frame.setTitle(Game.title);
         game.frame.add(game);
         game.frame.pack();
         game.frame.setResizable(false);
